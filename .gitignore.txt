@@ -1,0 +1,39 @@
+# =====================================================================
+# PortfolioSentinel — .gitignore
+# =====================================================================
+# Archivos que NO deben subirse a GitHub
+# =====================================================================
+
+# Credenciales y secretos (MUY IMPORTANTE)
+.streamlit/secrets.toml
+*.env
+.env
+
+# Datos locales
+data/
+*.xlsx
+*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Streamlit
+.streamlit/config.toml
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
