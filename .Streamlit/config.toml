@@ -1,0 +1,22 @@
+# =====================================================================
+# PortfolioSentinel — config.toml
+# =====================================================================
+# Configuración de la interfaz de Streamlit.
+# Este archivo debe guardarse en: .streamlit/config.toml
+# =====================================================================
+
+[theme]
+primaryColor = "#4a9eff"
+backgroundColor = "#0a0e1a"
+secondaryBackgroundColor = "#1a2332"
+textColor = "#e8f1ff"
+font = "sans serif"
+
+[server]
+headless = true
+port = 8501
+enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
