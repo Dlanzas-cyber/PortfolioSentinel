@@ -8,8 +8,10 @@ openpyxl>=3.1.2  # Necesario para leer/escribir .xlsx con pandas
 # --- Visualización ---
 plotly>=5.18.0
 
+# --- HTTP / APIs ---
+requests>=2.31.0
+
 # --- Opcional: Telegram (descomenta según tu implementación en telegram_bot.py) ---
-# python-telegram-bot>=20.3   # Si usas la librería 'python-telegram-bot'
+# python-telegram-bot>=20.3   # Si usas la librería 'python-telegram-bot' (async)
 # pytelegrambotapi>=4.14.0    # Si usas 'telebot' (PyTelegramBotAPI)
-# requests>=2.31.0            # Si haces llamadas HTTP directas a la API de Telegram
-# python-dotenv>=1.0.0        # Si cargas tokens desde .env
+# python-dotenv>=1.0.0        # Si cargas tokens desde un archivo .env
