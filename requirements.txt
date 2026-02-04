@@ -1,26 +1,15 @@
-# =====================================================================
-# PortfolioSentinel — requirements.txt (versión Streamlit)
-# =====================================================================
-# Este archivo lista todas las librerías de Python necesarias.
-#
-# Para instalar localmente:
-#     pip install -r requirements.txt
-#
-# Para Streamlit Cloud: se instalan automáticamente al desplegar.
-# =====================================================================
+# --- Core UI ---
+streamlit>=1.31.0
 
-# Streamlit: framework para la interfaz web
-streamlit==1.31.0
+# --- Data & Excel ---
+pandas>=2.1.0
+openpyxl>=3.1.2  # Necesario para leer/escribir .xlsx con pandas
 
-# Requests: llamadas a APIs
-requests==2.31.0
+# --- Visualización ---
+plotly>=5.18.0
 
-# Pandas: manejo de datos y Excel
-pandas==2.2.0
-openpyxl==3.1.2
-
-# Plotly: gráficos interactivos
-plotly==5.18.0
-
-# Para gestión de fechas
-python-dateutil==2.8.2
+# --- Opcional: Telegram (descomenta según tu implementación en telegram_bot.py) ---
+# python-telegram-bot>=20.3   # Si usas la librería 'python-telegram-bot'
+# pytelegrambotapi>=4.14.0    # Si usas 'telebot' (PyTelegramBotAPI)
+# requests>=2.31.0            # Si haces llamadas HTTP directas a la API de Telegram
+# python-dotenv>=1.0.0        # Si cargas tokens desde .env
