@@ -10,11 +10,8 @@
 #  - Estructura: profile, historical_prices, current_price, etc.
 # =====================================================================
 
-from __future__ import annotations
-
 import os
 import time
-from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 import requests
@@ -59,7 +56,7 @@ def _to_float(value: Any) -> Optional[float]:
 
 
 def _sleep_backoff(seconds: float) -> None:
-    """Pequeño helper para respetar límites si la API responde con nota de rate limit."""
+    """Espera simple para respetar límites si la API responde con rate limit."""
     try:
         time.sleep(seconds)
     except Exception:
@@ -75,18 +72,15 @@ def api_get(url: str, max_retries: int = 3, timeout: int = 15) -> Optional[Dict[
         try:
             resp = requests.get(url, timeout=timeout)
             if resp.status_code != 200:
-                # Error HTTP no recuperable en general
                 return None
 
             data = resp.json()
 
             # Mensajes de límite / cadencia de Alpha Vantage
             if isinstance(data, dict) and any(k in data for k in ("Note", "Information")):
-                # Espera y reintenta
                 _sleep_backoff(60)
                 continue
 
-            # Si llega aquí, devolvemos data (puede ser {} si no hay contenido)
             return data
         except Exception:
             if attempt < max_retries:
@@ -113,7 +107,7 @@ def get_company_profile(ticker: str) -> Optional[Dict[str, Any]]:
         return None
 
     url = (
-        f"https://www.alphavantage.co/query"
+        "https://www.alphavantage.co/query"
         f"?function=OVERVIEW&symbol={t}&apikey={api_key}"
     )
 
@@ -121,26 +115,25 @@ def get_company_profile(ticker: str) -> Optional[Dict[str, Any]]:
     if not data or not isinstance(data, dict) or "Symbol" not in data:
         return None
 
-    # Normalizamos algunos campos
     profile = {
         "symbol": data.get("Symbol", t),
         "name": data.get("Name", t),
-        "sector": data.get("Sector", None) or "—",
-        "industry": data.get("Industry", None),
-        "exchange": data.get("Exchange", None),
-        "country": data.get("Country", None),
-        "description": data.get("Description", None),
-        "beta": _to_float(data.get("Beta", None)) or 1.0,
-        "market_cap": _to_float(data.get("MarketCapitalization", None)),
-        "pe_ratio": _to_float(data.get("PERatio", None)),
-        "peg_ratio": _to_float(data.get("PEGRatio", None)),
-        "dividend_yield": _to_float(data.get("DividendYield", None)),
-        "fiscal_year_end": data.get("FiscalYearEnd", None),
-        "latest_quarter": data.get("LatestQuarter", None),
-        "profit_margin": _to_float(data.get("ProfitMargin", None)),
-        "operating_margin_ttm": _to_float(data.get("OperatingMarginTTM", None)),
-        "return_on_assets_ttm": _to_float(data.get("ReturnOnAssetsTTM", None)),
-        "return_on_equity_ttm": _to_float(data.get("ReturnOnEquityTTM", None)),
+        "sector": data.get("Sector") or "—",
+        "industry": data.get("Industry"),
+        "exchange": data.get("Exchange"),
+        "country": data.get("Country"),
+        "description": data.get("Description"),
+        "beta": _to_float(data.get("Beta")) or 1.0,
+        "market_cap": _to_float(data.get("MarketCapitalization")),
+        "pe_ratio": _to_float(data.get("PERatio")),
+        "peg_ratio": _to_float(data.get("PEGRatio")),
+        "dividend_yield": _to_float(data.get("DividendYield")),
+        "fiscal_year_end": data.get("FiscalYearEnd"),
+        "latest_quarter": data.get("LatestQuarter"),
+        "profit_margin": _to_float(data.get("ProfitMargin")),
+        "operating_margin_ttm": _to_float(data.get("OperatingMarginTTM")),
+        "return_on_assets_ttm": _to_float(data.get("ReturnOnAssetsTTM")),
+        "return_on_equity_ttm": _to_float(data.get("ReturnOnEquityTTM")),
     }
     return profile
 
@@ -149,16 +142,15 @@ def get_company_profile(ticker: str) -> Optional[Dict[str, Any]]:
 def get_daily_adjusted_prices(ticker: str, outputsize: str = "compact") -> Optional[List[Dict[str, Any]]]:
     """
     Obtiene la serie diaria ajustada. Devuelve una lista de velas ordenadas (ascendente por fecha).
-    Cada elemento contiene: date, open, high, low, close, adj_close, volume.
+    Cada elemento: date, open, high, low, close, adj_close, volume, dividend, split_coeff
     """
     api_key = get_api_key()
     t = (ticker or "").upper().strip()
     if not t:
         return None
 
-    # outputsize: "compact" (últimos ~100) o "full" (histórico completo)
     url = (
-        f"https://www.alphavantage.co/query"
+        "https://www.alphavantage.co/query"
         f"?function=TIME_SERIES_DAILY_ADJUSTED&symbol={t}&outputsize={outputsize}&apikey={api_key}"
     )
 
@@ -173,8 +165,6 @@ def get_daily_adjusted_prices(ticker: str, outputsize: str = "compact") -> Optio
     series = data[ts_key]  # dict: "YYYY-MM-DD" -> campos
     rows: List[Dict[str, Any]] = []
     for date_str, vals in series.items():
-        # Alpha Vantage keys típicas:
-        # 1. open, 2. high, 3. low, 4. close, 5. adjusted close, 6. volume, 7. dividend amount, 8. split coefficient
         rows.append({
             "date": date_str,
             "open": _to_float(vals.get("1. open")),
@@ -187,7 +177,7 @@ def get_daily_adjusted_prices(ticker: str, outputsize: str = "compact") -> Optio
             "split_coeff": _to_float(vals.get("8. split coefficient")),
         })
 
-    # Ordenamos por fecha ASC (de más antiguo a más reciente)
+    # Ordena por fecha ASC (de más antiguo a más reciente)
     rows.sort(key=lambda r: r["date"])
     return rows
 
@@ -198,14 +188,11 @@ def get_daily_adjusted_prices(ticker: str, outputsize: str = "compact") -> Optio
 
 def get_all_company_data(ticker: str, shares: int = 0, buy_price: float = 0.0) -> Optional[Dict[str, Any]]:
     """
-    Orquesta la obtención de perfil + precios y devuelve el diccionario
-    que la app espera para análisis y scoring.
-
-    Estructura devuelta:
+    Devuelve estructura esperada por app.py:
     {
         "ticker": str,
-        "profile": { ... },
-        "historical_prices": [ {date, open, high, low, close, adj_close, volume, ...}, ... ],
+        "profile": {...},
+        "historical_prices": [...],
         "current_price": float,
         "last_refreshed": "YYYY-MM-DD",
         "shares": int,
@@ -217,19 +204,55 @@ def get_all_company_data(ticker: str, shares: int = 0, buy_price: float = 0.0) -
         return None
 
     profile = get_company_profile(t)
-    prices = get_daily_adjusted_prices(t, outputsize="compact")  # usa "full" si necesitas histórico completo
+    prices = get_daily_adjusted_prices(t, outputsize="compact")  # usa "full" si necesitas todo el histórico
 
     if not profile and not prices:
-        # Nada que devolver
         return None
 
-    # Precio actual = último 'close' disponible
-    last_close = None
+    last_close = 0.0
     last_date = None
     if prices:
-        last = prices[-1]  # tras ordenar ASC, el último es el más reciente
-        last_close = last.get("close")
+        last = prices[-1]  # último tras ordenar ASC
+        last_close = last.get("close") or 0.0
         last_date = last.get("date")
 
-    # Beta por defecto si falta
     if not profile:
+        profile = {
+            "symbol": t,
+            "name": t,
+            "sector": "—",
+            "beta": 1.0,
+        }
+    else:
+        profile["beta"] = profile.get("beta", 1.0) or 1.0
+
+    result = {
+        "ticker": t,
+        "profile": profile,
+        "historical_prices": prices or [],
+        "current_price": last_close,
+        "last_refreshed": last_date,
+        "shares": int(shares or 0),
+        "buy_price": float(buy_price or 0.0),
+    }
+    return result
+
+
+# ──────────────────────────────────────────────────────────────────
+# Prueba rápida desde consola
+# ──────────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    # Ejecuta: python data_fetcher.py
+    # Usa la API key de secrets/env o "demo" (MSFT suele funcionar con demo).
+    test_ticker = os.environ.get("TEST_TICKER", "MSFT")
+    print(f"Testing data_fetcher with ticker {test_ticker}...")
+
+    prof = get_company_profile(test_ticker)
+    prices = get_daily_adjusted_prices(test_ticker, outputsize="compact")
+    data = get_all_company_data(test_ticker, shares=10, buy_price=100.0)
+
+    print("Profile (resumen):", prof and {k: prof[k] for k in ("symbol", "name", "sector", "beta")})
+    if prices:
+        print("Last 3 candles:", prices[-3:])
+    print("All data keys:", list((data or {}).keys()))
